@@ -27,7 +27,7 @@ install: build
 	install -m 0755 getpeercon_server $(DESTDIR)/usr/bin/getpeercon_server
 
 getpeercon_server: getpeercon_server.c
-	$(CC) $(CFLAGS) -o $@ -lselinux $<
+	$(CC) $(CFLAGS) -g -o $@ -lselinux $<
 
 clean:
 	$(RM) getpeercon_server
