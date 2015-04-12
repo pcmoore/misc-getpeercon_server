@@ -1,6 +1,6 @@
-Summary: Labeled networking test utility for SELinux
+Summary: SELinux development and test utility
 Name: getpeercon_server
-Version: 20121204
+Version: 20150411
 Release: 0%{?dist}
 License: GPLv2
 Source: %{name}-%{version}.tar.gz
@@ -14,17 +14,20 @@ communication paths over IPv4, IPv6, and UNIX domain sockets.
 %setup -n %{name}
 
 %build
-make
+make build
 
 %install
+pwd
 rm -rf "%{buildroot}"
 mkdir -p "%{buildroot}/%{_bindir}"
-install getpeercon_server "%{buildroot}/%{_bindir}"
+make DESTDIR="%{buildroot}" install
 
 %files
 %doc LICENSE
 %{_bindir}/getpeercon_server
 
 %changelog
-* Mon Dec  3 2012 Paul Moore <pmoore@redhat.com> - 20121203-0
+* Sat Apr 11 2015 Paul Moore <pmoore@redhat.com> - 20150412-0
+- Updated directory structure and build
+* Mon Dec 03 2012 Paul Moore <pmoore@redhat.com> - 20121203-0
 - Initial release
