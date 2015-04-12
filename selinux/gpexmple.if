@@ -15,5 +15,5 @@ interface(`gpexmple_domtrans',`
                 type gpexmple_t, gpexmple_exec_t;
         ')
 
-        domtrans_pattern($1, isds_db2_exec_t, isds_db2_t)
+        domtrans_pattern($1, gpexmple_exec_t, gpexmple_t)
 ')
