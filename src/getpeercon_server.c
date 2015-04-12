@@ -154,8 +154,7 @@ int main(int argc, char *argv[])
 	if (srv_sock_path == NULL) {
 		struct sockaddr_in6 srv_sock_addr;
 
-		printf_err("-> listening on TCP port %d ... ",
-			srv_sock_port);
+		printf_err("-> listening on TCP port %hu ... ", srv_sock_port);
 		memset(&srv_sock_addr, 0, sizeof(srv_sock_addr));
 		srv_sock_addr.sin6_family = family;
 		memcpy(&srv_sock_addr.sin6_addr, &in6addr_any,
