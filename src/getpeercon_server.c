@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <getopt.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -42,12 +43,40 @@
 #define RECV_BUF_LEN 1024
 #define ADDR_STR_LEN (INET6_ADDRSTRLEN + 1)
 
+#define printf_out(...) \
+	do { \
+		if (log) { \
+			fprintf(log, __VA_ARGS__); \
+			fflush(log); \
+		} \
+		fprintf(stdout, __VA_ARGS__); \
+	} while(0);
+
+#define printf_err(...) \
+	do { \
+		if (log) { \
+			fprintf(log, __VA_ARGS__); \
+			fflush(log); \
+		} \
+		fprintf(stderr, __VA_ARGS__); \
+	} while(0);
+
+/**
+ * usage
+ */
+void usage(char *prg)
+{
+	fprintf(stderr, "usage: %s [-h] [-l <logfile>] <port|path>\n", prg);
+	exit(1);
+}
+
 /**
  * main
  */
 int main(int argc, char *argv[])
 {
 	int rc;
+	int arg_iter;
 	int srv_sock, cli_sock;
 	int family;
 	int true = 1;
@@ -62,24 +91,43 @@ int main(int argc, char *argv[])
 	char cli_sock_addr_str[ADDR_STR_LEN];
 	security_context_t ctx;
 	char *ctx_str;
+	FILE *log = NULL;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: %s <port|path>\n", argv[0]);
-		return 1;
-	}
-	srv_sock_port = atoi(argv[1]);
+	/* get the command line arguments */
+	do {
+		arg_iter = getopt(argc, argv, "hl:");
+		switch (arg_iter) {
+		case 'l':
+			if (log)
+				usage(argv[0]);
+			log = fopen(optarg, "a");
+			if (log == NULL) {
+				printf_err("error: unable to open \"%s\"\n",
+					   optarg);
+				exit(1);
+			}
+			break;
+		case 'h':
+			/* help */
+			usage(argv[0]);
+			break;
+		default:
+			break;
+		}
+	} while (arg_iter > 0);
+	srv_sock_port = atoi(argv[optind]);
 	if (srv_sock_port == 0)
-		srv_sock_path = argv[1];
+		srv_sock_path = argv[optind];
 
 	rc = getcon(&ctx);
 	if (rc < 0)
 		ctx_str = strdup("NO_CONTEXT");
 	else
 		ctx_str = strdup(ctx);
-	fprintf(stderr, "-> running as %s\n", ctx_str);
+	printf_err("-> running as %s\n", ctx_str);
 	free(ctx_str);
 
-	fprintf(stderr, "-> creating socket ... ");
+	printf_err("-> creating socket ... ");
 	if (srv_sock_path == NULL) {
 		family = AF_INET6;
 		srv_sock = socket(family, SOCK_STREAM, IPPROTO_TCP);
@@ -92,21 +140,21 @@ int main(int argc, char *argv[])
 		srv_sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	}
 	if (srv_sock < 0) {
-		fprintf(stderr, "error: %d\n", srv_sock);
+		printf_err("error: %d\n", srv_sock);
 		return 1;
 	}
 	rc = setsockopt(srv_sock,
 			SOL_SOCKET, SO_REUSEADDR, &true, sizeof(true));
 	if (rc < 0) {
-		fprintf(stderr, "error: %d\n", srv_sock);
+		printf_err("error: %d\n", srv_sock);
 		return 1;
 	}
-	fprintf(stderr, "ok\n");
+	printf_err("ok\n");
 
 	if (srv_sock_path == NULL) {
 		struct sockaddr_in6 srv_sock_addr;
 
-		fprintf(stderr, "-> listening on TCP port %d ... ",
+		printf_err("-> listening on TCP port %d ... ",
 			srv_sock_port);
 		memset(&srv_sock_addr, 0, sizeof(srv_sock_addr));
 		srv_sock_addr.sin6_family = family;
@@ -118,8 +166,8 @@ int main(int argc, char *argv[])
 	} else {
 		struct sockaddr_un srv_sock_addr;
 
-		fprintf(stderr, "-> listening on UNIX socket %s ... ",
-			srv_sock_path);
+		printf_err("-> listening on UNIX socket %s ... ",
+			   srv_sock_path);
 		srv_sock_addr.sun_family = family;
 		strncpy(srv_sock_addr.sun_path, srv_sock_path, UNIX_PATH_MAX);
 		srv_sock_addr.sun_path[UNIX_PATH_MAX - 1] = '\0';
@@ -127,16 +175,16 @@ int main(int argc, char *argv[])
 			  sizeof(srv_sock_addr));
 	}
 	if (rc < 0) {
-		fprintf(stderr, "bind error: %d\n", rc);
+		printf_err("bind error: %d\n", rc);
 		return 1;
 	}
 
 	rc = listen(srv_sock, LISTEN_QUEUE);
 	if (rc < 0) {
-		fprintf(stderr, "listen error: %d\n", rc);
+		printf_err("listen error: %d\n", rc);
 		return 1;
 	} else
-		fprintf(stderr, "ok\n");
+		printf_err("ok\n");
 
 	cli_sock_addr = (struct sockaddr *)&cli_sock_saddr;
 	cli_sock_4addr = (struct sockaddr_in *)&cli_sock_saddr;
@@ -144,13 +192,13 @@ int main(int argc, char *argv[])
 
 	/* loop forever */
 	for (;;) {
-		fprintf(stderr, "-> waiting ... ", srv_sock_port);
+		printf_err("-> waiting ... ", srv_sock_port);
 		fflush(stdout);
 		memset(&cli_sock_saddr, 0, sizeof(cli_sock_saddr));
 		cli_sock_addr_len = sizeof(cli_sock_saddr);
 		cli_sock = accept(srv_sock, cli_sock_addr, &cli_sock_addr_len);
 		if (cli_sock < 0) {
-			fprintf(stderr, "error: %d\n", cli_sock);
+			printf_err("error: %d\n", cli_sock);
 			continue;
 		}
 		rc = getpeercon(cli_sock, &ctx);
@@ -163,8 +211,8 @@ int main(int argc, char *argv[])
 			inet_ntop(cli_sock_addr->sa_family,
 				  (void *)&cli_sock_4addr->sin_addr,
 				  cli_sock_addr_str, ADDR_STR_LEN);
-			fprintf(stderr, "connect(%s,%s)\n",
-				cli_sock_addr_str, ctx_str);
+			printf_err("connect(%s,%s)\n",
+				   cli_sock_addr_str, ctx_str);
 			break;
 		case AF_INET6:
 			if (IN6_IS_ADDR_V4MAPPED(&cli_sock_6addr->sin6_addr))
@@ -175,29 +223,31 @@ int main(int argc, char *argv[])
 				inet_ntop(cli_sock_addr->sa_family,
 					  (void *)&cli_sock_6addr->sin6_addr,
 					  cli_sock_addr_str, ADDR_STR_LEN);
-			fprintf(stderr, "connect(%s,%s)\n",
-				cli_sock_addr_str, ctx_str);
+			printf_err("connect(%s,%s)\n",
+				   cli_sock_addr_str, ctx_str);
 			break;
 		case AF_UNIX:
-			fprintf(stderr, "connect(UNIX,%s)\n", ctx_str);
+			printf_err("connect(UNIX,%s)\n", ctx_str);
 			break;
 		default:
-			fprintf(stderr, "connect(%d,%s)\n",
-				cli_sock_addr->sa_family, ctx_str);
+			printf_err("connect(%d,%s)\n",
+				   cli_sock_addr->sa_family, ctx_str);
 		}
 		free(ctx_str);
 
 		do {
 			rc = recv(cli_sock, buffer, RECV_BUF_LEN, 0);
-			if (rc < 0)
-				fprintf(stderr, "error: %d\n", rc);
-			else {
+			if (rc < 0) {
+				printf_err("error: %d\n", rc);
+			} else {
 				buffer[rc] = '\0';
-				printf("%s", buffer);
+				printf_out("%s", buffer);
 			}
 		} while (rc > 0);
 		close(cli_sock);
-		fprintf(stderr, "-> connection closed\n");
+		printf_err("-> connection closed\n");
+		if (log)
+			fclose(log);
 	}
 
 	return 0;
