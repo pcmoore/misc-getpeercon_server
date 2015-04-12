@@ -1,0 +1,19 @@
+## <summary>getpeercon_server</summary>
+
+######################################
+## <summary>
+##  Execute gpexmple_exec_t in the gpexmple_t domain.
+## </summary>
+## <param name="domain">
+##  <summary>
+##  Domain allowed to transition to gpexmple_t.
+##  </summary>
+## </param>
+#
+interface(`gpexmple_domtrans',`
+        gen_require(`
+                type gpexmple_t, gpexmple_exec_t;
+        ')
+
+        domtrans_pattern($1, isds_db2_exec_t, isds_db2_t)
+')

@@ -21,8 +21,8 @@
 
 .PHONY: all tarball build install clean
 
-SUBDIRS_BUILD = src
-SUBDIRS_INSTALL = src
+SUBDIRS_BUILD = src selinux
+SUBDIRS_INSTALL = src selinux
 
 TARBALL="getpeercon_server-$$(date +%Y%m%d).tar.gz"
 
@@ -43,6 +43,9 @@ build: $(SUBDIRS_BUILD)
 install: $(SUBDIRS_INSTALL)
 	for i in $^; do \
 		$(MAKE) -C $$i install; \
+	done
+	for i in $^; do \
+		$(MAKE) -C $$i selinux; \
 	done
 
 clean: $(SUBDIRS_BUILD)

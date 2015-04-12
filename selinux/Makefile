@@ -1,7 +1,7 @@
 #
-# getpeercon_server makefile
+# getpeercon_server selinux policy makefile
 #
-# Copyright (c) 2012 Red Hat <pmoore@redhat.com>
+# Copyright (c) 2015 Red Hat <pmoore@redhat.com>
 # Author: Paul Moore <paul@paul-moore.com>
 #
 
@@ -19,18 +19,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.PHONY: build install clean
+include /usr/share/selinux/devel/Makefile
 
-build: getpeercon_server
+.PHONY: build install selinux
+
+build: gpexmple.pp
 
 install: build
-	install -m 0755 getpeercon_server $(DESTDIR)/usr/bin/getpeercon_server
+	semodule -i gpexmple.pp
 
 selinux:
-	restorecon $(DESTDIR)/usr/bin/getpeercon_server
 
-getpeercon_server: getpeercon_server.c
-	$(CC) $(CFLAGS) -g -o $@ -lselinux $<
-
-clean:
-	$(RM) getpeercon_server

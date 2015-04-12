@@ -1,0 +1,38 @@
+policy_module(gpexmple, 1.0.0)
+
+########################################
+#
+# declarations
+#
+
+# domain and associated on-disk type
+type gpexmple_t;
+type gpexmple_exec_t;
+application_domain(gpexmple_t, gpexmple_exec_t)
+
+# temporary log files
+type gpexmple_log_t;
+files_tmp_file(gpexmple_log_t)
+
+########################################
+#
+# file policy
+#
+
+# label log files correctly when saved in tmp_t directories
+files_tmp_filetrans(gpexmple_t, gpexmple_log_t, { dir file })
+
+########################################
+#
+# gpexmple_t policy
+#
+
+# transition from unconfined_t to gpexmple_t
+unconfined_run_to(gpexmple_t, gpexmple_exec_t)
+
+# network permissions
+allow gpexmple_t self:tcp_socket { create_stream_socket_perms };
+corenet_tcp_bind_generic_node(gpexmple_t)
+
+# log file permissions
+allow gpexmple_t gpexmple_log_t:file { create open append };
