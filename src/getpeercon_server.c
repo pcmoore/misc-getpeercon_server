@@ -40,6 +40,7 @@
 #define UNIX_PATH_MAX 108
 #define LISTEN_QUEUE 1
 #define RECV_BUF_LEN 1024
+#define ADDR_STR_LEN (INET6_ADDRSTRLEN + 1)
 
 /**
  * main
@@ -48,15 +49,17 @@ int main(int argc, char *argv[])
 {
 	int rc;
 	int srv_sock, cli_sock;
+	int family;
 	int true = 1;
 	struct sockaddr_storage cli_sock_saddr;
 	struct sockaddr *cli_sock_addr;
+	struct sockaddr_in *cli_sock_4addr;
 	struct sockaddr_in6 *cli_sock_6addr;
 	socklen_t cli_sock_addr_len;
 	short srv_sock_port;
 	char *srv_sock_path = NULL;
 	char buffer[RECV_BUF_LEN];
-	char cli_sock_addr_str[INET6_ADDRSTRLEN + 1];
+	char cli_sock_addr_str[ADDR_STR_LEN];
 	security_context_t ctx;
 	char *ctx_str;
 
@@ -77,10 +80,17 @@ int main(int argc, char *argv[])
 	free(ctx_str);
 
 	fprintf(stderr, "-> creating socket ... ");
-	if (srv_sock_path == NULL)
-		srv_sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-	else
+	if (srv_sock_path == NULL) {
+		family = AF_INET6;
+		srv_sock = socket(family, SOCK_STREAM, IPPROTO_TCP);
+		if (srv_sock < 0) {
+			family = AF_INET;
+			srv_sock = socket(family, SOCK_STREAM, IPPROTO_TCP);
+		}
+	} else {
+		family = AF_UNIX;
 		srv_sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	}
 	if (srv_sock < 0) {
 		fprintf(stderr, "error: %d\n", srv_sock);
 		return 1;
@@ -99,7 +109,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "-> listening on TCP port %d ... ",
 			srv_sock_port);
 		memset(&srv_sock_addr, 0, sizeof(srv_sock_addr));
-		srv_sock_addr.sin6_family = AF_INET6;
+		srv_sock_addr.sin6_family = family;
 		memcpy(&srv_sock_addr.sin6_addr, &in6addr_any,
 		       sizeof(in6addr_any));
 		srv_sock_addr.sin6_port = htons(srv_sock_port);
@@ -110,7 +120,7 @@ int main(int argc, char *argv[])
 
 		fprintf(stderr, "-> listening on UNIX socket %s ... ",
 			srv_sock_path);
-		srv_sock_addr.sun_family = AF_UNIX;
+		srv_sock_addr.sun_family = family;
 		strncpy(srv_sock_addr.sun_path, srv_sock_path, UNIX_PATH_MAX);
 		srv_sock_addr.sun_path[UNIX_PATH_MAX - 1] = '\0';
 		rc = bind(srv_sock, (struct sockaddr *)&srv_sock_addr,
@@ -129,6 +139,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "ok\n");
 
 	cli_sock_addr = (struct sockaddr *)&cli_sock_saddr;
+	cli_sock_4addr = (struct sockaddr_in *)&cli_sock_saddr;
 	cli_sock_6addr = (struct sockaddr_in6 *)&cli_sock_saddr;
 
 	/* loop forever */
@@ -148,15 +159,22 @@ int main(int argc, char *argv[])
 		else
 			ctx_str = strdup(ctx);
 		switch (cli_sock_addr->sa_family) {
+		case AF_INET:
+			inet_ntop(cli_sock_addr->sa_family,
+				  (void *)&cli_sock_4addr->sin_addr,
+				  cli_sock_addr_str, ADDR_STR_LEN);
+			fprintf(stderr, "connect(%s,%s)\n",
+				cli_sock_addr_str, ctx_str);
+			break;
 		case AF_INET6:
 			if (IN6_IS_ADDR_V4MAPPED(&cli_sock_6addr->sin6_addr))
 				inet_ntop(AF_INET,
 				(void *)&cli_sock_6addr->sin6_addr.s6_addr32[3],
-					  cli_sock_addr_str, INET_ADDRSTRLEN);
+					  cli_sock_addr_str, ADDR_STR_LEN);
 			else
 				inet_ntop(cli_sock_addr->sa_family,
 					  (void *)&cli_sock_6addr->sin6_addr,
-					  cli_sock_addr_str, INET6_ADDRSTRLEN);
+					  cli_sock_addr_str, ADDR_STR_LEN);
 			fprintf(stderr, "connect(%s,%s)\n",
 				cli_sock_addr_str, ctx_str);
 			break;
