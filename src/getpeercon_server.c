@@ -50,6 +50,7 @@
 			fflush(log); \
 		} \
 		fprintf(stdout, __VA_ARGS__); \
+		fflush(stdout); \
 	} while(0);
 
 #define printf_err(...) \
@@ -59,6 +60,7 @@
 			fflush(log); \
 		} \
 		fprintf(stderr, __VA_ARGS__); \
+		fflush(stderr); \
 	} while(0);
 
 /**
@@ -191,8 +193,7 @@ int main(int argc, char *argv[])
 
 	/* loop forever */
 	for (;;) {
-		printf_err("-> waiting ... ", srv_sock_port);
-		fflush(stdout);
+		printf_err("-> waiting ... ");
 		memset(&cli_sock_saddr, 0, sizeof(cli_sock_saddr));
 		cli_sock_addr_len = sizeof(cli_sock_saddr);
 		cli_sock = accept(srv_sock, cli_sock_addr, &cli_sock_addr_len);
@@ -245,9 +246,9 @@ int main(int argc, char *argv[])
 		} while (rc > 0);
 		close(cli_sock);
 		printf_err("-> connection closed\n");
-		if (log)
-			fclose(log);
 	}
+	if (log)
+		fclose(log);
 
 	return 0;
 }
