@@ -118,6 +118,8 @@ int main(int argc, char *argv[])
 			break;
 		}
 	} while (arg_iter > 0);
+	if (optind >= argc)
+		usage(argv[0]);
 	srv_sock_port = atoi(argv[optind]);
 	if (srv_sock_port == 0)
 		srv_sock_path = argv[optind];
