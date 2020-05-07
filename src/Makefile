@@ -30,7 +30,7 @@ selinux:
 	restorecon $(DESTDIR)/usr/bin/getpeercon_server
 
 getpeercon_server: getpeercon_server.c
-	$(CC) $(CFLAGS) -g -o $@ -lselinux $<
+	$(CC) $(CFLAGS) -g -o $@ $< -lselinux 
 
 clean:
 	$(RM) getpeercon_server
