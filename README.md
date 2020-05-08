@@ -1,4 +1,4 @@
-getpeercon_server: A Simple SELinux Development and Test Tool
+getpeercon_server: A Simple SELinux Network Test Tool
 ===============================================================================
 https://github.com/pcmoore/getpeercon_server
 
