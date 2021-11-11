@@ -37,6 +37,9 @@ unconfined_run_to(gpexmple_t, gpexmple_exec_t)
 if (!gpexmple_break_policy) {
 	allow gpexmple_t self:tcp_socket { create_stream_socket_perms };
 	corenet_tcp_bind_generic_node(gpexmple_t)
+	corenet_tcp_bind_generic_port(gpexmple_t)
+	corenet_tcp_sendrecv_generic_if(gpexmple_t)
+	corenet_tcp_sendrecv_generic_node(gpexmple_t)
 }
 
 # log file permissions
