@@ -19,18 +19,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.PHONY: build install clean
-
+.PHONY: build
 build: getpeercon_server
 
+.PHONY: install
 install: build
 	install -m 0755 getpeercon_server $(DESTDIR)/usr/bin/getpeercon_server
 
-selinux:
+.PHONY: selinux
+selinux: install
 	restorecon $(DESTDIR)/usr/bin/getpeercon_server
 
 getpeercon_server: getpeercon_server.c
 	$(CC) $(CFLAGS) -g -o $@ $< -lselinux
 
+.PHONY: clean
 clean:
 	$(RM) getpeercon_server

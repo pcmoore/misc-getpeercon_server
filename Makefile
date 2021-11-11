@@ -19,27 +19,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-.PHONY: all tarball build install clean
-
 SUBDIRS_BUILD = src selinux
 SUBDIRS_INSTALL = src selinux
 
 TARBALL="getpeercon_server-$$(date +%Y%m%d).tar.gz"
 
+.PHONY: all
 all:
 	@echo ">> make targets: tarball build install clean"
 
+.PHONY: tarball
 tarball: clean
 	dir=$$(basename "$$(pwd)"); \
 	cd ..; tar -zcf $(TARBALL) \
 		--transform "s/^"$$dir"/getpeercon_server/" \
 		--exclude ".git*" --exclude "*~" "$$dir"
 
+.PHONY: build
 build: $(SUBDIRS_BUILD)
 	for i in $^; do \
 		$(MAKE) -C $$i build; \
 	done
 
+.PHONY: install
 install: $(SUBDIRS_INSTALL)
 	for i in $^; do \
 		$(MAKE) -C $$i install; \
@@ -48,6 +50,7 @@ install: $(SUBDIRS_INSTALL)
 		$(MAKE) -C $$i selinux; \
 	done
 
+.PHONY: clean
 clean: $(SUBDIRS_BUILD)
 	for i in $^; do \
 		$(MAKE) -C $$i clean; \

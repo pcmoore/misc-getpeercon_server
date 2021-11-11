@@ -21,12 +21,12 @@
 
 include /usr/share/selinux/devel/Makefile
 
-.PHONY: build install selinux
-
+.PHONY: build
 build: gpexmple.pp
 
+.PHONY: install
 install: build
 	semodule -i gpexmple.pp
 
+.PHONY: selinux
 selinux:
-
