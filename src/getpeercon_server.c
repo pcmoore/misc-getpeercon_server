@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	char *srv_sock_path = NULL;
 	char buffer[RECV_BUF_LEN];
 	char cli_sock_addr_str[ADDR_STR_LEN];
-	security_context_t ctx;
+	char *ctx;
 	char *ctx_str;
 	FILE *log = NULL;
 
