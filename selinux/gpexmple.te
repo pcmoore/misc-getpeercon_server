@@ -5,6 +5,9 @@ policy_module(gpexmple, 1.0.0)
 # declarations
 #
 
+# booleans
+bool gpexmple_break_policy false;
+
 # domain and associated on-disk type
 type gpexmple_t;
 type gpexmple_exec_t;
@@ -31,8 +34,10 @@ files_tmp_filetrans(gpexmple_t, gpexmple_log_t, { dir file })
 unconfined_run_to(gpexmple_t, gpexmple_exec_t)
 
 # network permissions
-allow gpexmple_t self:tcp_socket { create_stream_socket_perms };
-corenet_tcp_bind_generic_node(gpexmple_t)
+if (!gpexmple_break_policy) {
+	allow gpexmple_t self:tcp_socket { create_stream_socket_perms };
+	corenet_tcp_bind_generic_node(gpexmple_t)
+}
 
 # log file permissions
 allow gpexmple_t gpexmple_log_t:file { create open append };
